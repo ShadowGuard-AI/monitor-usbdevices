@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # monitor-usbdevices
 Detects and logs USB device connections and disconnections, including device name, vendor ID, and product ID. Can help identify rogue devices being plugged into a system. - Focused on System monitoring and alerts
 
