@@ -57,6 +57,7 @@ def get_lsusb_blocks():
         elif stripped.startswith("idProduct") and "0x" in stripped:
             current["product_id"] = stripped.split("0x", 1)[1].split()[0]
         elif stripped.startswith("iSerial"):
+            # I take the last token as the serial because the middle token is a descriptor index, not part of the value. A serial that itself contains spaces gets cut down to its final word here.
             parts = stripped.split()
             if len(parts) >= 3:
                 current["serial_number"] = parts[-1]
@@ -92,6 +93,7 @@ def get_connected_usb_devices():
         try:
             if os.name == 'nt':  # Windows
                 import wmi
+                # I open a fresh WMI connection for each partition instead of once for the whole scan. That is slow on a machine with many volumes, but it keeps a failed connection from poisoning the lookups for every later disk.
                 c = wmi.WMI()
                 for usb in c.Win32_DiskDrive():
                     if disk.device in usb.Name:
@@ -101,6 +103,7 @@ def get_connected_usb_devices():
             elif os.name == 'posix':  # Linux, macOS
                 device_name = disk.device.replace('/dev/', '')
                 for block in lsusb_blocks:
+                    # This match is a plain substring test against the whole lsusb block, and the first matching block wins. A short name like sda can match inside a longer device name, so the vendor and serial I report can come from the wrong physical device on a busy bus.
                     if device_name in block.get("text", ""):
                         if "vendor_id" in block:
                             device_info["vendor_id"] = block["vendor_id"]
